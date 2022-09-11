@@ -1,28 +1,28 @@
 ### Сборка проекта
 
-**для разработки**
-docker-compose build
+**для разработки**\
+docker-compose build\
 docker-compose up
 
-**продуктовая**
-docker-compose -f docker-copose.yml -f docker-compose.production.yml build
-docker-compose -f docker-copose.yml -f docker-compose.production.yml up
+**продуктовая**\
+docker-compose -f docker-compose.yml -f docker-compose.production.yml build\
+docker-compose -f docker-compose.yml -f docker-compose.production.yml up
 
 ---
 
 ### Описание основных директорий проекта
 
-**@database-scripts/**
+**@database-scripts/**\
 можно разместить файлы .sh/.sql которые будут запущены при первом старте контейнера mariadb
 
-**@env_files/**
+**@env_files/**\
 содержит файлы с переменными окружения необходимыми для работы сервисов
 
-**gateway/**
+**gateway/**\
 шлюз для взаимодействия с системой
 
-**api/**
+**api/**\
 модуль для работы с данными системы
 
-**common/**
+**common/**\
 общая кодовая база для сервисов

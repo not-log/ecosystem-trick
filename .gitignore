@@ -1,7 +1,7 @@
 # docker
 @database-store
 @database-scripts/**
-!@database-scripts/README.md
+!@database-scripts/.gitkeep
 
 # env files
 *.env*

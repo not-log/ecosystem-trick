@@ -7,7 +7,7 @@
 **/.dockerignore
 
 # Data
-mariadb
+@database-store
 mapper-export
 
 # Git
