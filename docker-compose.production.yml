@@ -1,0 +1,13 @@
+# продуктовый конфиг
+version: "3.8"
+
+services:
+  gateway:
+    build:
+      target: production
+    command: npm run start:prod
+
+  api:
+    build:
+      target: production
+    command: npm run start:prod

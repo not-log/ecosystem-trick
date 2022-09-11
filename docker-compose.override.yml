@@ -1,0 +1,17 @@
+# конфиг для разработки
+version: "3.8"
+
+services:
+  gateway:
+    build:
+      target: development
+    command: npm run start:dev
+    volumes:
+      - .:/usr/src/app
+
+  api:
+    build:
+      target: development
+    command: npm run start:dev
+    volumes:
+      - .:/usr/src/app

@@ -1,0 +1,65 @@
+# базовый конфиг
+version: "3.8"
+
+services:
+  # gateway service
+  gateway:
+    build:
+      context: .
+      dockerfile: ./gateway/Dockerfile
+    env_file:
+      - ./@env_files/.gateway.docker.env
+    depends_on:
+      - rabbitmq
+    ports:
+      - "4000:4000"
+
+  # api service
+  api:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile
+    env_file:
+      - ./@env_files/.api.docker.env
+    depends_on:
+      db:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  # https://hub.docker.com/_/rabbitmq
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    restart: always
+    env_file:
+      - ./@env_files/.rabbitmq.env
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  # https://hub.docker.com/_/mariadb
+  db:
+    image: mariadb:10.3.9
+    restart: always
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - ./@database-store:/var/lib/mysql
+      - ./@database-scripts:/docker-entrypoint-initdb.d/:ro
+    ports:
+      - "3306:3306"
+
+  # https://hub.docker.com/_/phpmyadmin
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY=1

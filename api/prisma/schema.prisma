@@ -1,0 +1,140 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+  binaryTargets   = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Record {
+  id          Int   @id @default(autoincrement())
+  userId      Int   @map("user_id")
+  trickId     Int   @map("trick_id")
+  style       Int   @db.SmallInt
+  combo       Int
+  type        Int   @db.TinyInt
+  time        Float @db.Float
+  startSpeed  Float @map("start_speed") @db.Float
+  endSpeed    Float @map("end_speed") @db.Float
+  avgSpeed    Float @map("avg_speed") @db.Float
+  jumps       Int
+  strafes     Int
+  date        Int
+  completions Int?  @default(0) @db.SmallInt
+  user        User? @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_[records]_[user_id]_[users]_[id]")
+  trick       Trick @relation(fields: [trickId], references: [id], onDelete: Restrict, map: "fk_[records]_[trick_id]_[tricks]_[id]")
+
+  @@index([trickId], map: "fk_[records]_[trick_id]_[tricks]_[id]")
+  @@index([userId, trickId, style, type], map: "idx_records")
+  @@map("records")
+}
+
+model Map {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique @db.VarChar(256)
+  author   String?   @db.VarChar(256)
+  triggers Trigger[]
+  tricks   Trick[]
+  whops    Whop[]
+
+  @@map("ref_maps")
+}
+
+model Trigger {
+  id                Int                @id @default(autoincrement())
+  mapId             Int                @map("map_id")
+  name              String             @db.VarChar(64)
+  globalPassthrough Boolean?           @default(false) @map("global_passthrough")
+  detectionType     Int?               @default(0) @map("detection_type") @db.TinyInt
+  map               Map                @relation(fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[ref_triggers]_[map_id]_[ref_maps]_[id]")
+  trickPath         TrickPathTrigger[]
+
+  @@unique([mapId, name])
+  @@index([mapId], map: "fk_[ref_triggers]_[map_id]_[ref_maps]_[id]")
+  @@map("ref_triggers")
+}
+
+model TrickPathTrigger {
+  id           Int     @id @default(autoincrement())
+  trickId      Int     @map("trick_id")
+  triggerId    Int     @map("trigger_id")
+  triggerOrder Int     @map("trigger_order") @db.SmallInt
+  type         Int?    @default(0) @db.TinyInt
+  trick        Trick   @relation(fields: [trickId], references: [id], onDelete: Cascade, map: "fk_[trick_path]_[trick_id]_[tricks]_[id]")
+  trigger      Trigger @relation(fields: [triggerId], references: [id], onDelete: Restrict, map: "fk_[trick_path]_[trigger_id]_[ref_triggers]_[id]")
+
+  @@index([trickId], map: "fk_[trick_path]_[trick_id]_[tricks]_[id]")
+  @@index([triggerId], map: "fk_[trick_path]_[trigger_id]_[ref_triggers]_[id]")
+  @@map("trick_path")
+}
+
+model Trick {
+  id             Int     @id @unique(map: "trick_id") @default(autoincrement())
+  mapId          Int     @map("map_id")
+  // маппинг на таблицу users, может отсутствовать если трюк был импортирован
+  authorId       Int?    @map("author_id")
+  updateAuthorId Int?    @map("update_author_id")
+  createdAt      Int     @map("created_at")
+  updatedAt      Int?    @map("updated_at")
+  name           String  @db.VarChar(128)
+  // если authorId NULL, то эта строка должна быть заполнена
+  authorName     String? @map("author") @db.VarChar(128)
+
+  // Античиты:
+  // максимальное количество прыжков на прохождение трюка
+  maxJumps     Int?     @default(-1) @map("max_jumps")
+  // запрет на старт трюка через прыжок (на платформе)
+  noJumpStart  Boolean? @default(false) @map("no_jump_start")
+  // разрешает прехоп и снимает ограничение скорости на старте трюка
+  prespeedable Boolean? @default(false) @map("prespeedable")
+  loopCount    Int?     @default(2) @map("loop_count")
+
+  // Прочее:
+  repetitionTrigger Int? @map("repetition_trigger")
+
+  map          Map                @relation(fields: [mapId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[map_id]_[ref_maps]_[id]")
+  author       User?              @relation(name: "CreatedTricks", fields: [authorId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[author_id]_[users]_[id]")
+  updateAuthor User?              @relation(name: "UpdatedTricks", fields: [updateAuthorId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[update_author_id]_[users]_[id]")
+  records      Record[]
+  trickPath    TrickPathTrigger[]
+
+  @@unique([mapId, name])
+  @@index([mapId], map: "fk_[tricks]_[map_id]_[ref_maps]_[id]")
+  @@index([authorId], map: "fk_[tricks]_[author_id]_[users]_[id]")
+  @@index([updateAuthorId], map: "fk_[tricks]_[update_author_id]_[users]_[id]")
+  @@map("tricks")
+}
+
+// нужны поля
+// first_connected_at
+// last_connected_at
+// roles
+model User {
+  id            Int      @id @unique @default(autoincrement())
+  steamId       Int      @unique @map("steam_id")
+  name          String?  @db.VarChar(128)
+  ip            Int?
+  records       Record[]
+  createdTricks Trick[]  @relation("CreatedTricks")
+  updatedTricks Trick[]  @relation("UpdatedTricks")
+
+  @@map("users")
+}
+
+model Whop {
+  id           Int    @id @default(autoincrement())
+  mapId        Int    @map("map_id")
+  name         String @db.VarChar(32)
+  position     String @db.VarChar(30)
+  angles       String @db.VarChar(30)
+  speed        Float  @db.Float
+  speedVector  String @map("speed_vector") @db.VarChar(30)
+  restorePitch Int?   @default(0) @map("restore_pitch") @db.TinyInt
+  map          Map    @relation(fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[whops]_[map_id]_[ref_maps]_[id]")
+
+  @@index([mapId], map: "fk_[whops]_[map_id]_[ref_maps]_[id]")
+  @@map("whops")
+}
