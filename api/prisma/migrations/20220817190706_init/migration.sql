@@ -18,7 +18,7 @@ CREATE TABLE `records` (
     INDEX `fk_[records]_[trick_id]_[tricks]_[id]`(`trick_id`),
     INDEX `idx_records`(`auth`, `trick_id`, `style`, `type`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- CreateTable
 CREATE TABLE `ref_maps` (
@@ -27,7 +27,7 @@ CREATE TABLE `ref_maps` (
     `name` VARCHAR(256) NULL,
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- CreateTable
 CREATE TABLE `ref_triggers` (
@@ -39,7 +39,7 @@ CREATE TABLE `ref_triggers` (
 
     INDEX `fk_[ref_triggers]_[map_id]_[ref_maps]_[id]`(`map_id`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- CreateTable
 CREATE TABLE `trick_path` (
@@ -52,7 +52,7 @@ CREATE TABLE `trick_path` (
     INDEX `fk_[trick_path]_[trick_id]_[tricks]_[id]`(`trick_id`),
     INDEX `fk_[trick_path]_[trigger_id]_[ref_triggers]_[id]`(`trigger_id`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- CreateTable
 CREATE TABLE `tricks` (
@@ -69,7 +69,7 @@ CREATE TABLE `tricks` (
     UNIQUE INDEX `trick_id`(`id`),
     INDEX `fk_[tricks]_[map_id]_[ref_maps]_[id]`(`map_id`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- CreateTable
 CREATE TABLE `users` (
@@ -78,7 +78,7 @@ CREATE TABLE `users` (
     `ip` INTEGER NULL,
 
     PRIMARY KEY (`auth`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- CreateTable
 CREATE TABLE `whops` (
@@ -93,7 +93,7 @@ CREATE TABLE `whops` (
 
     INDEX `fk_[whops]_[map_id]_[ref_maps]_[id]`(`map_id`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- AddForeignKey
 ALTER TABLE `records` ADD CONSTRAINT `fk_[records]_[auth]_[users]_[auth]` FOREIGN KEY (`auth`) REFERENCES `users`(`auth`) ON DELETE CASCADE ON UPDATE CASCADE;
