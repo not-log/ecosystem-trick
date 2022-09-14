@@ -9,5 +9,8 @@
       "@common/rmq": ["./../../common/rmq/src"],
       "@common/dto": ["./../../common/dto"]
     }
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
   }
 }

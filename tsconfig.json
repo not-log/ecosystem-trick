@@ -19,8 +19,5 @@
 
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true
-  },
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
   }
 }
