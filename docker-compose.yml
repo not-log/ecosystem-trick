@@ -11,6 +11,7 @@ services:
       - ./@env_files/.gateway.docker.env
     depends_on:
       - rabbitmq
+    restart: on-failure
     ports:
       - "4000:4000"
 
@@ -26,6 +27,7 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
+    restart: on-failure
 
   # https://hub.docker.com/_/rabbitmq
   rabbitmq:
