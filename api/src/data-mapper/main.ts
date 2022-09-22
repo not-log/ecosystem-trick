@@ -1,26 +1,40 @@
+/* eslint-disable no-console */
 import { PrismaClient } from "@prisma/client";
 
-import { getSki2Data } from "./data/ski_2";
+import { ActionKeys, dataExportPrompt } from "../prompt";
 import { exportMappedTrickPathTriggers, exportMappedTricks, exportMappedTriggers } from "./export";
-import {
-  getMappedTrickPathTriggers,
-  getMappedTricks,
-  getMappedTriggers,
-  getSki2TriggerDetectionType,
-} from "./transform";
-import { CurrentDatabaseData, IMapData, TriggerDetectionTypeDetector } from "./types";
+import { getMappedTrickPathTriggers, getMappedTricks, getMappedTriggers } from "./transform";
+import { CurrentDatabaseData, IMapData, TriggerTypeGenerator } from "./types";
+import { MapDataGenerator } from "./types/index";
+import { getMapGenerators } from "./utils";
 
-// TODO сделать вызов функций экспорта по командам
-// понадобится сделать резолверы для get*Data и get*TriggerDetectionType по названию карты
-exportMapData("surf_ski_2_trick", getSki2Data, getSki2TriggerDetectionType);
+export async function runDataMapper() {
+  const promptAnswers = await dataExportPrompt();
+
+  const { map, action } = promptAnswers;
+  if (!map || !action) {
+    console.error("map or action not specified");
+    return;
+  }
+
+  const generators = getMapGenerators(map);
+  if (!generators) {
+    console.error("couldn't set map generators");
+    return;
+  }
+
+  const [getMapData, getTriggerType] = generators;
+
+  await exportMapData(map, action, getMapData, getTriggerType);
+}
 
 async function exportMapData(
-  localMapName: string,
-  getMapData: () => Promise<IMapData>,
-  typeDetector: TriggerDetectionTypeDetector,
+  map: string,
+  action: ActionKeys,
+  getMapData: MapDataGenerator,
+  getTriggerType: TriggerTypeGenerator,
 ) {
   const prisma = new PrismaClient();
-
   // get local data
   await prisma.$connect();
   const [maps, triggers, tricks, trickPath] = await Promise.all([
@@ -38,26 +52,37 @@ async function exportMapData(
     trickPath,
   };
 
-  const localMapId = maps.find((map) => map.name === localMapName)?.id;
+  const mapId = maps.find((databaseMap) => databaseMap.name === map)?.id;
 
-  if (!localMapId) return;
+  if (!mapId) {
+    console.error(`map ${map} was not found in local database`);
+    return;
+  }
 
   // maps data
   const mapData = await getMapData();
 
   /* export */
-  exportTriggers(mapData, localMapName, localMapId, typeDetector);
-  // exportTricks(mapData, localMapName, localMapId);
-  exportTrickPathTriggers(mapData, currentDatabaseData, localMapName, localMapId);
+  if (action === ActionKeys.GENERATE_TRIGGERS) {
+    exportTriggers(mapData, map, mapId, getTriggerType);
+  }
+
+  if (action === ActionKeys.GENERATE_TRICKS) {
+    exportTricks(mapData, map, mapId);
+  }
+
+  if (action === ActionKeys.GENERATE_TRICK_PATH) {
+    exportTrickPathTriggers(mapData, currentDatabaseData, map, mapId);
+  }
 }
 
 function exportTriggers(
   mapData: IMapData,
   localMapName: string,
   localMapId: number,
-  typeDetector: TriggerDetectionTypeDetector,
+  getTriggerType: TriggerTypeGenerator,
 ) {
-  const outputTriggers = getMappedTriggers(mapData.triggers, localMapId, typeDetector);
+  const outputTriggers = getMappedTriggers(mapData.triggers, localMapId, getTriggerType);
 
   const date = new Date();
   exportMappedTriggers(date, mapData.triggers, outputTriggers, localMapName, localMapId);

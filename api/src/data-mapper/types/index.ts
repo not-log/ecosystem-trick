@@ -18,4 +18,5 @@ export interface CurrentDatabaseData {
   trickPath: TrickPathTrigger[];
 }
 
-export type TriggerDetectionTypeDetector = (name: string) => number;
+export type MapDataGenerator = () => Promise<IMapData>;
+export type TriggerTypeGenerator = (name: string) => number;

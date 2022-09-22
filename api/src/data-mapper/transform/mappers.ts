@@ -10,7 +10,7 @@ import {
   OutputTrick,
   OutputTrickPathTrigger,
   OutputTrigger,
-  TriggerDetectionTypeDetector,
+  TriggerTypeGenerator,
 } from "../types";
 import { filterTricksWithZSkyworldAuthor } from "./filters";
 import { normalizeTrickPathTriggersOrder } from "./transformers";
@@ -19,9 +19,9 @@ import { joinInsertValues } from "./utils";
 export const getMappedTriggers = (
   triggers: IInputTrigger[],
   localMapId: number,
-  typeDetector: TriggerDetectionTypeDetector,
+  getTriggerType: TriggerTypeGenerator,
 ): OutputTrigger[] => {
-  return triggers.map(mapInputTriggerToPrismaTrigger(localMapId, typeDetector)).filter(isDefined);
+  return triggers.map(mapInputTriggerToPrismaTrigger(localMapId, getTriggerType)).filter(isDefined);
 };
 
 export const getMappedTricks = (tricks: IInputTrick[], localMapId: number): OutputTrick[] => {
@@ -67,14 +67,14 @@ export const getMappedTrickPathTriggers = (
 
 export const mapInputTriggerToPrismaTrigger = (
   localMapId: number,
-  typeDetector: TriggerDetectionTypeDetector,
+  getTriggerType: TriggerTypeGenerator,
 ): ((input: IInputTrigger) => OutputTrigger | null) => {
   return (input: IInputTrigger): OutputTrigger | null => {
     return {
       mapId: localMapId,
       name: input.name,
       globalPassthrough: Boolean(input.passthrough),
-      detectionType: typeDetector(input.name),
+      detectionType: getTriggerType(input.name),
     };
   };
 };
@@ -138,7 +138,7 @@ export const mapPrismaTriggersToInsertValues = (triggers: OutputTrigger[]): stri
       trigger.name,
       Number(trigger.globalPassthrough),
       trigger.detectionType ?? -1,
-    )}),`;
+    )})`;
   });
 };
 
@@ -155,7 +155,7 @@ export const mapPrismaTricksToInsertValues = (tricks: OutputTrick[]): string[] =
       Number(trick.prespeedable),
       Number(trick.repetitionTrigger),
       trick.loopCount,
-    )}),`;
+    )})`;
   });
 };
 
@@ -167,6 +167,6 @@ export const mapPrismaTrickPathTriggersToInsertValues = (trickPathTriggers: Outp
       trickTrigger.triggerId,
       trickTrigger.triggerOrder,
       trickTrigger.type,
-    )}),`;
+    )})`;
   });
 };
