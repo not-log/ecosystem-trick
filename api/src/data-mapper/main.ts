@@ -3,7 +3,9 @@ import { PrismaClient } from "@prisma/client";
 
 import { ActionKeys, dataExportPrompt } from "../prompt";
 import { exportMappedTrickPathTriggers, exportMappedTricks, exportMappedTriggers } from "./export";
+import { exportMappedTeleports } from "./export/teleports";
 import { getMappedTrickPathTriggers, getMappedTricks, getMappedTriggers } from "./transform";
+import { getMappedTeleports } from "./transform/mappers";
 import { CurrentDatabaseData, IMapData, TriggerTypeGenerator } from "./types";
 import { MapDataGenerator } from "./types/index";
 import { getMapGenerators } from "./utils";
@@ -74,6 +76,10 @@ async function exportMapData(
   if (action === ActionKeys.GENERATE_TRICK_PATH) {
     exportTrickPathTriggers(mapData, currentDatabaseData, map, mapId);
   }
+
+  if (action === ActionKeys.GENERATE_TELEPORTS) {
+    exportTeleports(mapData, currentDatabaseData, map, mapId);
+  }
 }
 
 function exportTriggers(
@@ -107,4 +113,17 @@ function exportTrickPathTriggers(
 
   const date = new Date();
   exportMappedTrickPathTriggers(date, inputTrickPathTriggers, outputTrickPathTriggers, localMapName, localMapId);
+}
+
+function exportTeleports(
+  mapData: IMapData,
+  currentDatabaseData: CurrentDatabaseData,
+  localMapName: string,
+  localMapId: number,
+) {
+  const outputTeleports = getMappedTeleports(mapData, currentDatabaseData, localMapId);
+
+  const { teleports: inputTeleports } = mapData;
+  const date = new Date();
+  exportMappedTeleports(date, inputTeleports, outputTeleports, localMapName, localMapId);
 }

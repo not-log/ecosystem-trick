@@ -12,9 +12,11 @@ import {
   OutputTrigger,
   TriggerTypeGenerator,
 } from "../types";
+import { IInputMapTeleport } from "./../types/input-types";
+import { OutputTeleport } from "./../types/output-types";
 import { filterTricksWithZSkyworldAuthor } from "./filters";
 import { normalizeTrickPathTriggersOrder } from "./transformers";
-import { joinInsertValues } from "./utils";
+import { joinInsertValues, numbersToString } from "./utils";
 
 export const getMappedTriggers = (
   triggers: IInputTrigger[],
@@ -61,6 +63,31 @@ export const getMappedTrickPathTriggers = (
       if (!localTriggerId) return null;
 
       return mapModifiedInputTrickPathTriggerToPrismaTrickPathTrigger(localTriggerId)(trigger);
+    })
+    .filter(isDefined);
+};
+
+export const getMappedTeleports = (
+  mapData: IMapData,
+  currentDatabaseData: CurrentDatabaseData,
+  localMapId: number,
+): OutputTeleport[] => {
+  const { triggers: inputTriggers, teleports } = mapData;
+  const { triggers: localTriggers } = currentDatabaseData;
+
+  return teleports
+    .map((teleport): OutputTeleport | null => {
+      const { trigger_id: inputTriggerId } = teleport;
+
+      const inputTrigger = inputTriggers.find((trigger) => trigger.id === inputTriggerId);
+      const localTrigger = localTriggers
+        .filter((trigger) => trigger.mapId === localMapId)
+        .find((trigger) => trigger.name === inputTrigger?.name);
+
+      // при inputTriggerId == null триггер является вхопом
+      if (!inputTrigger && inputTriggerId !== null) return null;
+
+      return mapInputTeleportToPrismaTeleport(localMapId, localTrigger?.id || null)(teleport);
     })
     .filter(isDefined);
 };
@@ -131,6 +158,22 @@ export const mapModifiedInputTrickPathTriggerToPrismaTrickPathTrigger = (
   };
 };
 
+export const mapInputTeleportToPrismaTeleport = (
+  localMapId: number,
+  localTriggerId: number | null,
+): ((input: IInputMapTeleport) => OutputTeleport) => {
+  return (input): OutputTeleport => {
+    return {
+      mapId: localMapId,
+      triggerId: localTriggerId,
+      name: input.name,
+      origin: numbersToString([input.origin_x, input.origin_y, input.angles_z]),
+      angles: numbersToString([input.angles_x, input.angles_y, input.angles_z]),
+      velocity: numbersToString([input.velocity_x, input.velocity_y, input.velocity_z]),
+    };
+  };
+};
+
 export const mapPrismaTriggersToInsertValues = (triggers: OutputTrigger[]): string[] => {
   return triggers.map((trigger) => {
     return `(${joinInsertValues(
@@ -167,6 +210,20 @@ export const mapPrismaTrickPathTriggersToInsertValues = (trickPathTriggers: Outp
       trickTrigger.triggerId,
       trickTrigger.triggerOrder,
       trickTrigger.type,
+    )})`;
+  });
+};
+
+export const mapPrismaTeleportToInsertValues = (teleports: OutputTeleport[]): string[] => {
+  return teleports.map((teleport) => {
+    // map_id, trigger_id, name, origin, angles, velocity
+    return `(${joinInsertValues(
+      teleport.mapId,
+      teleport.triggerId,
+      teleport.name,
+      teleport.origin,
+      teleport.angles,
+      teleport.velocity,
     )})`;
   });
 };

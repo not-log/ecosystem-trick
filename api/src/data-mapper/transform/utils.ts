@@ -10,3 +10,7 @@ export const joinInsertValues = (...values: unknown[]): string => {
 export const escapeQuotes = (value: string): string => {
   return value.replace(/\\/g, "\\\\").replace(/\$/g, "\\$").replace(/'/g, "\\'").replace(/"/g, '\\"');
 };
+
+export const numbersToString = (numbers: (number | null)[]): string => {
+  return numbers.map((number) => number || 0).join(";");
+};
