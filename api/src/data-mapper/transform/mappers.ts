@@ -167,9 +167,11 @@ export const mapInputTeleportToPrismaTeleport = (
       mapId: localMapId,
       triggerId: localTriggerId,
       name: input.name,
-      origin: numbersToString([input.origin_x, input.origin_y, input.angles_z]),
+      origin: numbersToString([input.origin_x, input.origin_y, input.origin_z]),
       angles: numbersToString([input.angles_x, input.angles_y, input.angles_z]),
       velocity: numbersToString([input.velocity_x, input.velocity_y, input.velocity_z]),
+      flatSpeed: null,
+      restorePitch: false,
     };
   };
 };
@@ -216,7 +218,7 @@ export const mapPrismaTrickPathTriggersToInsertValues = (trickPathTriggers: Outp
 
 export const mapPrismaTeleportToInsertValues = (teleports: OutputTeleport[]): string[] => {
   return teleports.map((teleport) => {
-    // map_id, trigger_id, name, origin, angles, velocity
+    // map_id, trigger_id, name, origin, angles, velocity, flat_speed, restore_pitch
     return `(${joinInsertValues(
       teleport.mapId,
       teleport.triggerId,
@@ -224,6 +226,8 @@ export const mapPrismaTeleportToInsertValues = (teleports: OutputTeleport[]): st
       teleport.origin,
       teleport.angles,
       teleport.velocity,
+      teleport.flatSpeed,
+      teleport.restorePitch,
     )})`;
   });
 };

@@ -2,6 +2,7 @@ export const joinInsertValues = (...values: unknown[]): string => {
   return values
     .map((value) => {
       if (value === null) return "NULL";
+      if (typeof value === "boolean") return Number(value);
       return typeof value === "string" ? `'${escapeQuotes(value)}'` : String(value);
     })
     .join(", ");

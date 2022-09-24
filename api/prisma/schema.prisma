@@ -65,13 +65,16 @@ model Trigger {
 }
 
 model Teleport {
-  id        Int     @id @default(autoincrement())
-  mapId     Int     @map("map_id")
-  triggerId Int?    @map("trigger_id")
-  name      String? @db.VarChar(128)
-  origin    String  @db.VarChar(128)
-  angles    String  @db.VarChar(128)
-  velocity  String  @db.VarChar(128)
+  id           Int      @id @default(autoincrement())
+  mapId        Int      @map("map_id")
+  triggerId    Int?     @map("trigger_id")
+  name         String?  @db.VarChar(128)
+  origin       String   @db.VarChar(128)
+  angles       String   @db.VarChar(128)
+  velocity     String   @db.VarChar(128)
+  // параметры вхопа
+  flatSpeed    Float?   @map("flat_speed") @db.Float
+  restorePitch Boolean? @default(false) @map("restore_pitch")
 
   map     Map      @relation(name: "MapTeleports", fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[teleports]_[map_id]_[ref_maps]_[id]")
   trigger Trigger? @relation(name: "TriggerTeleport", fields: [triggerId], references: [id], onDelete: NoAction, map: "fk_[teleports]_[triggerid_id]_[ref_triggers]_[id]")

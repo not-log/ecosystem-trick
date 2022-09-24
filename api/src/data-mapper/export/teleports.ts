@@ -22,7 +22,7 @@ export const exportMappedTeleports = (
   const fileName = getExportFileName(exportDate, localMapName, "teleports", "sql");
   const fileContent =
     fileHeader +
-    "INSERT INTO teleports (map_id, trigger_id, name, origin, angles, velocity) VALUES\n" +
+    "INSERT INTO teleports (map_id, trigger_id, name, origin, angles, velocity, flat_speed, restore_pitch) VALUES\n" +
     mapPrismaTeleportToInsertValues(outputTeleports).join(",\n");
 
   exportToFile(fileName, fileContent);
