@@ -22,7 +22,7 @@ export const exportMappedTricks = (
   const fileContent =
     fileHeader +
     "INSERT INTO tricks (map_id, created_at, name, author, max_jumps, no_jump_start, prespeedable, repetition_trigger, loop_count) VALUES\n" +
-    mapPrismaTricksToInsertValues(outputTricks).join("\n");
+    mapPrismaTricksToInsertValues(outputTricks).join(",\n");
 
   exportToFile(fileName, fileContent);
 };

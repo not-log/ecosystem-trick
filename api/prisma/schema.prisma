@@ -24,8 +24,9 @@ model Record {
   strafes     Int
   date        Int
   completions Int?  @default(0) @db.SmallInt
-  user        User? @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_[records]_[user_id]_[users]_[id]")
-  trick       Trick @relation(fields: [trickId], references: [id], onDelete: Restrict, map: "fk_[records]_[trick_id]_[tricks]_[id]")
+
+  user  User? @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_[records]_[user_id]_[users]_[id]")
+  trick Trick @relation(fields: [trickId], references: [id], onDelete: Restrict, map: "fk_[records]_[trick_id]_[tricks]_[id]")
 
   @@index([trickId], map: "fk_[records]_[trick_id]_[tricks]_[id]")
   @@index([userId, trickId, style, type], map: "idx_records")
@@ -33,38 +34,68 @@ model Record {
 }
 
 model Map {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique @db.VarChar(256)
-  author   String?   @db.VarChar(256)
+  id     Int     @id @default(autoincrement())
+  name   String  @unique @db.VarChar(256)
+  author String? @db.VarChar(256)
+
   triggers Trigger[]
   tricks   Trick[]
   whops    Whop[]
+
+  teleports Teleport[] @relation(name: "MapTeleports")
 
   @@map("ref_maps")
 }
 
 model Trigger {
-  id                Int                @id @default(autoincrement())
-  mapId             Int                @map("map_id")
-  name              String             @db.VarChar(64)
-  globalPassthrough Boolean?           @default(false) @map("global_passthrough")
-  detectionType     Int?               @default(0) @map("detection_type") @db.TinyInt
-  map               Map                @relation(fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[ref_triggers]_[map_id]_[ref_maps]_[id]")
-  trickPath         TrickPathTrigger[]
+  id                Int      @id @default(autoincrement())
+  mapId             Int      @map("map_id")
+  name              String   @db.VarChar(64)
+  globalPassthrough Boolean? @default(false) @map("global_passthrough")
+  detectionType     Int?     @default(0) @map("detection_type") @db.TinyInt
+
+  trickPath TrickPathTrigger[]
+
+  map      Map       @relation(fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[ref_triggers]_[map_id]_[ref_maps]_[id]")
+  teleport Teleport? @relation(name: "TriggerTeleport")
 
   @@unique([mapId, name])
   @@index([mapId], map: "fk_[ref_triggers]_[map_id]_[ref_maps]_[id]")
   @@map("ref_triggers")
 }
 
+model Teleport {
+  id           Int      @id @default(autoincrement())
+  mapId        Int      @map("map_id")
+  triggerId    Int?     @map("trigger_id")
+  name         String?  @db.VarChar(128)
+  origin       String   @db.VarChar(128)
+  angles       String   @db.VarChar(128)
+  velocity     String   @db.VarChar(128)
+  // параметры вхопа
+  flatSpeed    Float?   @map("flat_speed") @db.Float
+  restorePitch Boolean? @default(false) @map("restore_pitch")
+
+  map     Map      @relation(name: "MapTeleports", fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[teleports]_[map_id]_[ref_maps]_[id]")
+  trigger Trigger? @relation(name: "TriggerTeleport", fields: [triggerId], references: [id], onDelete: NoAction, map: "fk_[teleports]_[triggerid_id]_[ref_triggers]_[id]")
+
+  // triggerId - уникальное значение для этой таблицы
+  // с каждым триггером может быть связан только один телепорт
+  @@unique([triggerId])
+  @@index([mapId], map: "fk_[teleports]_[map_id]_[ref_maps]_[id]")
+  @@index([triggerId], map: "fk_[teleports]_[triggerid_id]_[ref_triggers]_[id]")
+  @@map("teleports")
+}
+
 model TrickPathTrigger {
-  id           Int     @id @default(autoincrement())
-  trickId      Int     @map("trick_id")
-  triggerId    Int     @map("trigger_id")
-  triggerOrder Int     @map("trigger_order") @db.SmallInt
-  type         Int?    @default(0) @db.TinyInt
-  trick        Trick   @relation(fields: [trickId], references: [id], onDelete: Cascade, map: "fk_[trick_path]_[trick_id]_[tricks]_[id]")
-  trigger      Trigger @relation(fields: [triggerId], references: [id], onDelete: Restrict, map: "fk_[trick_path]_[trigger_id]_[ref_triggers]_[id]")
+  id           Int  @id @default(autoincrement())
+  trickId      Int  @map("trick_id")
+  triggerId    Int  @map("trigger_id")
+  triggerOrder Int  @map("trigger_order") @db.SmallInt
+  type         Int? @default(0) @db.TinyInt
+
+  trick   Trick   @relation(fields: [trickId], references: [id], onDelete: Cascade, map: "fk_[trick_path]_[trick_id]_[tricks]_[id]")
+  trigger Trigger @relation(fields: [triggerId], references: [id], onDelete: Restrict, map: "fk_[trick_path]_[trigger_id]_[ref_triggers]_[id]")
 
   @@index([trickId], map: "fk_[trick_path]_[trick_id]_[tricks]_[id]")
   @@index([triggerId], map: "fk_[trick_path]_[trigger_id]_[ref_triggers]_[id]")
@@ -95,11 +126,12 @@ model Trick {
   // Прочее:
   repetitionTrigger Int? @map("repetition_trigger")
 
-  map          Map                @relation(fields: [mapId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[map_id]_[ref_maps]_[id]")
-  author       User?              @relation(name: "CreatedTricks", fields: [authorId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[author_id]_[users]_[id]")
-  updateAuthor User?              @relation(name: "UpdatedTricks", fields: [updateAuthorId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[update_author_id]_[users]_[id]")
-  records      Record[]
-  trickPath    TrickPathTrigger[]
+  records   Record[]
+  trickPath TrickPathTrigger[]
+
+  map          Map   @relation(fields: [mapId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[map_id]_[ref_maps]_[id]")
+  author       User? @relation(name: "CreatedTricks", fields: [authorId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[author_id]_[users]_[id]")
+  updateAuthor User? @relation(name: "UpdatedTricks", fields: [updateAuthorId], references: [id], onDelete: Restrict, map: "fk_[tricks]_[update_author_id]_[users]_[id]")
 
   @@unique([mapId, name])
   @@index([mapId], map: "fk_[tricks]_[map_id]_[ref_maps]_[id]")
@@ -113,13 +145,15 @@ model Trick {
 // last_connected_at
 // roles
 model User {
-  id            Int      @id @unique @default(autoincrement())
-  steamId       Int      @unique @map("steam_id")
-  name          String?  @db.VarChar(128)
-  ip            Int?
-  records       Record[]
-  createdTricks Trick[]  @relation("CreatedTricks")
-  updatedTricks Trick[]  @relation("UpdatedTricks")
+  id      Int     @id @unique @default(autoincrement())
+  steamId Int     @unique @map("steam_id")
+  name    String? @db.VarChar(128)
+  ip      Int?
+
+  records Record[]
+
+  createdTricks Trick[] @relation("CreatedTricks")
+  updatedTricks Trick[] @relation("UpdatedTricks")
 
   @@map("users")
 }
@@ -133,7 +167,8 @@ model Whop {
   speed        Float  @db.Float
   speedVector  String @map("speed_vector") @db.VarChar(30)
   restorePitch Int?   @default(0) @map("restore_pitch") @db.TinyInt
-  map          Map    @relation(fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[whops]_[map_id]_[ref_maps]_[id]")
+
+  map Map @relation(fields: [mapId], references: [id], onDelete: Cascade, map: "fk_[whops]_[map_id]_[ref_maps]_[id]")
 
   @@index([mapId], map: "fk_[whops]_[map_id]_[ref_maps]_[id]")
   @@map("whops")

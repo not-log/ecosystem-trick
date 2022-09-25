@@ -22,7 +22,7 @@ export const exportMappedTriggers = (
   const fileContent =
     fileHeader +
     "INSERT INTO ref_triggers (map_id, name, global_passthrough, detection_type) VALUES\n" +
-    mapPrismaTriggersToInsertValues(outputTriggers).join("\n");
+    mapPrismaTriggersToInsertValues(outputTriggers).join(",\n");
 
   exportToFile(fileName, fileContent);
 };

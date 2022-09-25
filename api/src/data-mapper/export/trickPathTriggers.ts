@@ -22,7 +22,7 @@ export const exportMappedTrickPathTriggers = (
   const fileContent =
     fileHeader +
     "INSERT INTO trick_path (trick_id, trigger_id, trigger_order, type) VALUES\n" +
-    mapPrismaTrickPathTriggersToInsertValues(outputTrickPathTriggers).join("\n");
+    mapPrismaTrickPathTriggersToInsertValues(outputTrickPathTriggers).join(",\n");
 
   exportToFile(fileName, fileContent);
 };
